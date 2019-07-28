@@ -1,0 +1,3 @@
+[submodule "VectorC"]
+	path = VectorC
+	url = https://github.com/Mckeevew/VectorC.git
