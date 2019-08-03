@@ -4,12 +4,18 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "VectorC/vector.h"
+#include "vector.h"
 
 
 
@@ -22,7 +28,14 @@ int getCommand(Vector* commandQueue)
 
     char* command = malloc(sizeof(char) * 100);
     printf("Please Enter the name of a Program to Run.\n");
-    gets(command);
+
+
+    int ch,i=0;
+    while((ch=fgetc(stdin))!='\n'){
+    	command[i++]=ch;
+    }
+
+
 	printf("Entered");
     if(strcmp(command, "execute") == 0)
     {
@@ -55,17 +68,33 @@ void startProgrames(Vector* commandQueue)
 	pid_t pid2;//PID of the child process
 	for(int i = 0; i < vector_total(commandQueue); i++)
 	{
+		//done so that program runtim won't count command parsing
+		char* command = vector_get(commandQueue,i);
+		printf("Vector Get: %s\n", command);
+		//size of variables may chamge, may want to malloc some of this
+		//make sure the last input into argv is NULL
+		char* ptr = strtok(command, " ");
+		char* argv[100];
+		int commBuild = 0;
+		while(ptr != NULL)
+		{
+			argv[commBuild++] = ptr;
+			printf("argv[%d] = '%s'\n",(commBuild - 1), argv[commBuild - 1]);
+			ptr = strtok(NULL," ");
+		}
+
 		pid_t pid;
 		pid = fork();//duplicate
 
 		//parent code
+		//The parents is responsible for recording times
 		if(pid >0)
 		{
 			startTime = clock();
 			//can we get exit codes like this?
 			pid2=wait(&exitStatus);
 			endTime = clock();
-			totalTime = ((double)(endTime-startTime));
+			totalTime =(double)(((endTime-startTime)/CLOCKS_PER_SEC)*1000);
 			if(WIFEXITED(exitStatus))
 			{
 				exitArr[i]=WEXITSTATUS(exitStatus);
@@ -74,17 +103,25 @@ void startProgrames(Vector* commandQueue)
 			timeArr[i]=totalTime;//record program run time
 		}
 		//child code
+		//The child is responsible for executing command processes
 		else if(pid == 0)
 		{
 			//is there a list of arguments we are supposed to provide
 			//exec() only returns on fail
 			//exitStatus = execvp(vector_get(&commandQueue,i),arg);
-			printf("(%d)\t%s\n", i, (char*) vector_get(commandQueue,i));
 
-			char* argv[100] = strtok((char*) vector_get(commandQueue,i), " ");
+			//command builder looping index variable
+			printf("EXECUTING:");
+			for(int j = 0; j < commBuild; j++)
+			{
+				printf(" %s:", argv[j]);
+			}
+
 			exitStatus = execvp( argv[0], argv);
 			printf("%d\n",exitStatus);
-			perror("ERROR");
+			perror("ERROR: ");
+			//we need to print the command names at the end, when reporting run times/exit codes
+			//so, we should not delete command queue
 			vector_delete(commandQueue, i);
 			exit(exitStatus);//I think this should return exit status to master
 		}
@@ -111,14 +148,14 @@ void startProgrames(Vector* commandQueue)
 			{
 				//need to convert time to measureable units
 				finalTime += timeArr[i];
-				printf("pid: %d\truntime: %lf\texit status: %d\n",taskArr[i],timeArr[i],exitArr[i]);
+				printf("pid: %d\truntime: %lf ms\texit status: %d\n",taskArr[i],timeArr[i],exitArr[i]);
 			}
 		}
-		printf("Final run time: %lf\n",finalTime);
+		printf("Final run time: %lf ms\n",finalTime);
 	}
 	else
 	{
-		printf("No programs we scheduled to run.\n");
+		printf("No programs were scheduled to run.\n");
 	}
 	free(exitArr);
 	free(taskArr);
