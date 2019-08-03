@@ -27,7 +27,7 @@ int getCommand(Vector* commandQueue)
     //100 charecters will be the limit and default length to all commands
 
     char* command = malloc(sizeof(char) * 100);
-    printf("Please Enter the name of a Program to Run.\n");
+    printf("Please Enter the name of a Program to Run.\n\n");
 
 
     int ch,i=0;
@@ -44,8 +44,8 @@ int getCommand(Vector* commandQueue)
     }
     else
     {
-        printf("You entered: %s\n", command);
-        printf("Currently %d programs are scheduled to run.\n",(vector_total(commandQueue) + 1));
+        printf("You entered: %s\n\n", command);
+        printf("Currently %d programs are scheduled to run.\n\n",(vector_total(commandQueue) + 1));
         vector_add(commandQueue, command);
         return 0;
     }
@@ -70,7 +70,6 @@ void startProgrames(Vector* commandQueue)
 	{
 		//done so that program runtim won't count command parsing
 		char* command = vector_get(commandQueue,i);
-		printf("Vector Get: %s\n", command);
 		//size of variables may chamge, may want to malloc some of this
 		//make sure the last input into argv is NULL
 		char* ptr = strtok(command, " ");
@@ -79,9 +78,9 @@ void startProgrames(Vector* commandQueue)
 		while(ptr != NULL)
 		{
 			argv[commBuild++] = ptr;
-			printf("argv[%d] = '%s'\n",(commBuild - 1), argv[commBuild - 1]);
 			ptr = strtok(NULL," ");
 		}
+		argv[commBuild] = NULL;
 
 		pid_t pid;
 		pid = fork();//duplicate
@@ -114,11 +113,12 @@ void startProgrames(Vector* commandQueue)
 			printf("EXECUTING:");
 			for(int j = 0; j < commBuild; j++)
 			{
-				printf(" %s:", argv[j]);
+				printf(" %s", argv[j]);
 			}
+			printf("\n");
 
 			exitStatus = execvp( argv[0], argv);
-			printf("%d\n",exitStatus);
+			printf("Exit Status: %d\n",exitStatus);
 			perror("ERROR: ");
 			//we need to print the command names at the end, when reporting run times/exit codes
 			//so, we should not delete command queue
@@ -169,13 +169,17 @@ int main(int argc, char** argv)
     vector_init(&commandQueue);
     printf("###########\t");
     printf("Welcome To Program Runner");
-    printf("\t###########\n");
+    printf("\t###########\n\n");
     printf("Once you have entered all of the programs you would like to run, enter 'execute'.\n");
 
     while(finished != 1)
     {
         finished = getCommand(&commandQueue);
     }
+
+	printf("###########\t");
+    printf("Running Your Programes");
+    printf("\t###########\n\n");
 
     startProgrames(&commandQueue);
 
