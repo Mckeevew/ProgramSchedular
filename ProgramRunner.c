@@ -37,7 +37,7 @@ int getCommand(Vector* commandQueue)
 
 
 	printf("Entered");
-    if(strcmp(command, "execute") == 0)
+    if((strcmp(command, "execute") == 0) || (strcmp(command, "Execute") == 0))
     {
         printf("Program Entry Ended. Starting programs...\n");
         return 1;
